@@ -1,6 +1,6 @@
 {
 	"name": "dock-rush",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"description": "A modern documentation system for React applications with versioning, multi-language support, and markdown-based content",
 	"keywords": [
 		"documentation",
@@ -50,7 +50,7 @@
 	"homepage": "https://github.com/da-b1rmuda/dock-rush#readme",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/da-b1rmuda/dock-rush.git"
+		"url": "git+https://github.com/da-b1rmuda/dock-rush.git"
 	},
 	"bugs": {
 		"url": "https://github.com/da-b1rmuda/dock-rush/issues"
@@ -62,8 +62,8 @@
 	],
 	"scripts": {
 		"build": "pnpm run build:ts && pnpm run build:css",
-		"build:ts": "pnpm exec tsup --no-watch",
-		"build:css": "pnpm exec tailwindcss -i ./src/styles/index.css -o ./dist/style.css --minify"
+		"build:ts": "tsup --no-watch",
+		"build:css": "tailwindcss -i ./src/styles/index.css -o ./dist/style.css --minify"
 	},
 	"peerDependencies": {
 		"react": "*",

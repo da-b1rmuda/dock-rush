@@ -294,8 +294,65 @@ function setupMiddleware(server: any, options: DockRushScannerPluginOptions) {
 export function dockRushScannerPlugin(
 	options: DockRushScannerPluginOptions = {}
 ) {
+	const VIRTUAL_STYLES_ID = 'virtual:dock-rush-styles'
+	const RESOLVED_STYLES_ID = '\0' + VIRTUAL_STYLES_ID
+
 	return {
 		name: 'dock-rush-folder-scanner',
+		enforce: 'pre' as const,
+		resolveId(id: string) {
+			// Создаем виртуальный модуль для стилей
+			if (id === VIRTUAL_STYLES_ID) {
+				return RESOLVED_STYLES_ID
+			}
+		},
+		load(id: string) {
+			// Загружаем виртуальный модуль, который импортирует стили
+			if (id === RESOLVED_STYLES_ID) {
+				return `import 'dock-rush/style.css'`
+			}
+		},
+		transform(code: string, id: string) {
+			// Автоматически добавляем импорт стилей при импорте основного модуля dock-rush
+			// Это работает и в dev, и в production
+			const isDockRushClient =
+				(id.includes('node_modules/dock-rush/dist/client') ||
+					id.includes('dock-rush/dist/client') ||
+					// Для dev режима, когда модуль еще не собран
+					(id.includes('dock-rush') &&
+						!id.includes('style.css') &&
+						!id.includes('plugin') &&
+						!id.includes('server') &&
+						!id.includes(VIRTUAL_STYLES_ID) &&
+						code.includes('export') &&
+						code.includes('Documentation'))) &&
+				!code.includes('dock-rush/style.css') &&
+				!code.includes(VIRTUAL_STYLES_ID) &&
+				!code.includes("import 'dock-rush/style.css'") &&
+				!code.includes('import "dock-rush/style.css"')
+
+			if (isDockRushClient) {
+				// Добавляем импорт стилей в начало файла
+				return `import 'virtual:dock-rush-styles';\n${code}`
+			}
+		},
+		transformIndexHtml(html: string) {
+			// Fallback: инжектим стили в HTML для случаев, когда модули не обработались
+			// Это работает как дополнительная страховка и в dev, и в production
+			return {
+				html,
+				tags: [
+					{
+						tag: 'link',
+						attrs: {
+							rel: 'stylesheet',
+							href: '/node_modules/dock-rush/dist/style.css',
+						},
+						injectTo: 'head' as const,
+					},
+				],
+			}
+		},
 		configureServer(server: any) {
 			setupMiddleware(server, options)
 		},
